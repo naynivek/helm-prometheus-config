@@ -1,0 +1,22 @@
+modules:
+  http_2xx:
+    http:
+      follow_redirects: true
+      preferred_ip_protocol: ip4
+      valid_http_versions:
+      - HTTP/1.1
+      - HTTP/2.0
+    prober: http
+    timeout: 5s
+  http_2xx_auth:
+    http:
+      follow_redirects: true
+      headers:
+        Authorization: Basic YWRtaW46cGFzc3dvcmQ=
+        X-Shopify-Hmac-Sha256: a
+      preferred_ip_protocol: ip4
+      valid_http_versions:
+      - HTTP/1.1
+      - HTTP/2.0
+    prober: http
+    timeout: 5s

@@ -1,0 +1,58 @@
+serverFiles:
+  alerting_rules.yml:
+    groups:
+    - name: Uptime
+      rules:
+      - alert: UptimeFailed
+        annotations:
+          description: |-
+            The app {{ $labels.service }} is unavailable, url for test {{ $labels.instance }} 
+          summary: App {{ $labels.service }} failed. (URL for check {{ $labels.instance }})
+        expr: probe_success < 1
+        for: 30s
+        labels:
+          severity: critical
+
+alertmanager:
+  config:
+    global: {}
+    route:
+      receiver: 'slack-notifications'
+      routes:
+      - matchers:
+          - severity="critical"
+      - receiver: 'slack-notifications'
+    receivers:
+    - name: 'slack-notifications'
+      slack_configs:
+      - channel: '#eng-uptime'
+        api_url: https://slack.com/api/chat.postMessage
+        send_resolved: true
+        icon_url: https://avatars3.githubusercontent.com/u/3380462
+        http_config:
+          authorization:
+            credentials: <MY_SLACK_CREDS>
+        title_link: |-
+          https://dashboard.viome.com/d/ab9851ea-473a-4bc6-8db6-b4af105f5cbc/uptime?orgId=1&refresh=5s
+        title: |-
+          [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
+          {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
+            {{" "}}(
+            {{- with .CommonLabels.Remove .GroupLabels.Names }}
+              {{- range $index, $label := .SortedPairs -}}
+                {{ if $index }}, {{ end }}
+                {{- $label.Name }}="{{ $label.Value -}}"
+              {{- end }}
+            {{- end -}}
+            )
+          {{- end }}
+        text: >-
+          {{ range .Alerts -}}
+          *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - `{{ .Labels.severity }}`{{ end }}
+
+          *Description:* {{ .Annotations.description }}
+
+          *Details:*
+            {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
+            {{ end }}
+          {{ end }}

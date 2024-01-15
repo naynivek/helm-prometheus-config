@@ -1,0 +1,33 @@
+- job_name: 'uptime-check-prod-simple'
+  metrics_path: /probe
+  params:
+    module: [http_2xx]
+  static_configs:
+    - targets: [https://myservice.example.com]
+      labels:
+        service: <myservice>
+          
+  relabel_configs:
+    - source_labels: [__address__]
+      target_label: __param_target
+    - source_labels: [__param_target]
+      target_label: instance
+    - target_label: __address__
+      replacement: prometheus-blackbox-exporter:9115
+
+- job_name: 'uptime-check-prod-auth'
+  metrics_path: /probe
+  params:
+    module: [http_2xx_auth]
+  static_configs:
+    - targets: [https://myservice-auth.example.com]
+      labels:
+        service: <myservice-auth>
+
+  relabel_configs:
+    - source_labels: [__address__]
+      target_label: __param_target
+    - source_labels: [__param_target]
+      target_label: instance
+    - target_label: __address__
+      replacement: prometheus-blackbox-exporter:9115
